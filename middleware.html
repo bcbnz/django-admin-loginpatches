@@ -1,0 +1,173 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Middleware &mdash; django-admin-loginpatches v0.5 documentation</title>
+    <link rel="stylesheet" href="static/default.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="top" title="django-admin-loginpatches v0.5 documentation" href="index.html" />
+    <link rel="next" title="GNU General Public License" href="gpl3.html" />
+    <link rel="prev" title="django-admin-loginpatches" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="gpl3.html" title="GNU General Public License"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="index.html" title="django-admin-loginpatches"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">django-admin-loginpatches v0.5 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="middleware">
+<h1>Middleware<a class="headerlink" href="#middleware" title="Permalink to this headline">¶</a></h1>
+<p>In Django, middleware is called for each request and response. It can be used
+to modify the input and/or output independently of the views. We use it to
+modify some of the built-in behaviour of the Django administration interface
+(<tt class="docutils literal"><span class="pre">django.contrib.admin</span></tt>) to better integrate it with the custom backend.</p>
+<p>See the <a class="reference external" href="http://docs.djangoproject.com/en/dev/topics/http/middleware/">Django middleware documentation</a>
+for more information on middleware.</p>
+<div class="section" id="emailauthmiddleware">
+<h2>EmailAuthMiddleware<a class="headerlink" href="#emailauthmiddleware" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="admin_loginpatches.middleware.EmailAuthMiddleware">
+<em class="property">class </em><tt class="descclassname">admin_loginpatches.middleware.</tt><tt class="descname">EmailAuthMiddleware</tt><a class="headerlink" href="#admin_loginpatches.middleware.EmailAuthMiddleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>Many of the views in the Django administration interface use the
+<tt class="docutils literal"><span class="pre">admin_view</span></tt> decorator from the <tt class="docutils literal"><span class="pre">django.contrib.admin.sites.AdminSite</span></tt>
+class to ensure that the user has the necessary permissions. Other views
+(such as the administration documentation) use the <tt class="docutils literal"><span class="pre">staff_member_required</span></tt>
+decorator from the <tt class="docutils literal"><span class="pre">django.contrib.admin.views.decorators</span></tt> module to check
+that the user is a staff member.</p>
+<p>The problem with this is that both decorators provide their own login forms
+rather than using the <tt class="docutils literal"><span class="pre">LOGIN_URL</span></tt> specified in the settings. These have
+hard-coded field names (so the user is prompted for a username rather than a
+password). They also give misleading error messages; for example, if the
+user enters their password wrong they are told that their username cannot
+contain the &#8216;&#64;&#8217; character. Finally, if they successfully log in but don&#8217;t
+have the correct permission, they are prompted to log in again rather than
+being told what the problem is.</p>
+<p>This piece of middleware overcomes this by replacing the decorators with
+custom versions. They redirects the user to the settings <tt class="docutils literal"><span class="pre">LOGIN_URL</span></tt> when
+needed, allowing any customisations made to the login view (such as custom
+authentication forms) to be used. If the user is logged in but doesn&#8217;t have
+the required permission to access page, the <tt class="docutils literal"><span class="pre">admin/permission_error.html</span></tt>
+template is used to inform the user. If staff status is required and they
+don&#8217;t have it, the <tt class="docutils literal"><span class="pre">admin/not_staff.html</span></tt> template is used. As a sanity
+check, it checks that they have an active account (this should have been
+done by the login view) and, if not, tells them so using the
+<tt class="docutils literal"><span class="pre">admin/inactive.html</span></tt> template.</p>
+<p><strong>It is recommended that you place this as the first piece of middleware to
+be used. Otherwise, earlier middleware may use the decorators prior to them
+being updated, thus ruining the backend integration.</strong></p>
+<p>For this to work correctly, you must:</p>
+<ul class="simple">
+<li>Configure <tt class="docutils literal"><span class="pre">LOGIN_URL</span></tt> in your settings to point to your login view.</li>
+<li>Ensure your login view correctly handles the <tt class="docutils literal"><span class="pre">next</span></tt> parameter to
+redirect the user to the appropriate page after login.</li>
+<li>Make the <tt class="docutils literal"><span class="pre">admin/inactive.html</span></tt>, <tt class="docutils literal"><span class="pre">admin/permission_fail.html</span></tt> and
+<tt class="docutils literal"><span class="pre">admin/not_staff.html</span></tt> templates available to the Django template
+loader. Templates are provided in the <tt class="docutils literal"><span class="pre">email_auth/templates</span></tt> directory
+of the project, or you can create your own using these as a guide.</li>
+</ul>
+<dl class="function">
+<dt id="admin_loginpatches.middleware.EmailAuthMiddleware.process_request">
+<tt class="descname">process_request</tt><big>(</big><em>request</em><big>)</big><a class="headerlink" href="#admin_loginpatches.middleware.EmailAuthMiddleware.process_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Django calls this function for every request made. It replaces the
+<tt class="docutils literal"><span class="pre">django.contrib.admin.views.decorators.staff_member_required</span></tt> and
+<tt class="docutils literal"><span class="pre">django.contrib.admin.sites.AdminSite.admin_view</span></tt> decorators with
+custom versions. It also regenerates the default admin site
+(<tt class="docutils literal"><span class="pre">django.contrib.admin.sites.site</span></tt>) to match.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Middleware</a><ul>
+<li><a class="reference internal" href="#emailauthmiddleware">EmailAuthMiddleware</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">django-admin-loginpatches</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="gpl3.html"
+                        title="next chapter">GNU General Public License</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="sources/middleware.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="gpl3.html" title="GNU General Public License"
+             >next</a></li>
+        <li class="right" >
+          <a href="index.html" title="django-admin-loginpatches"
+             >previous</a> |</li>
+        <li><a href="index.html">django-admin-loginpatches v0.5 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, Blair Bonnett.
+      Last updated on Sep 23, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.3.
+    </div>
+  </body>
+</html>
