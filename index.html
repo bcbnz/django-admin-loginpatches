@@ -84,9 +84,17 @@
             
   <div class="section" id="django-admin-loginpatches">
 <h1>django-admin-loginpatches<a class="headerlink" href="#django-admin-loginpatches" title="Permalink to this headline">¶</a></h1>
-<p>Patches the <a class="reference external" href="http://www.djangoproject.com">Django</a> administration code so that the login procedure for the
-administration site can be better integrated with custom authentication
-backends.</p>
+<p>By default, <a class="reference external" href="http://www.djangoproject.com">Django</a> requires a username and password for a user to log in.
+Alternative login methods, such as with an email address and passwords or via
+an LDAP server, can be implemented by using a custom authentication backend.
+The Django administrative interface can use these custom backends. However,
+the logon forms and corresponding error messages are hard-coded, often leading
+to a confusing user interface when a custom backend is used. This project fixes
+this by altering the behaviour of the administrative interface to allow the
+login forms and messages to be customisable just like the backend.</p>
+<p>This documentation describes the problems with the default behaviour, how the
+project fixes it, how to obtain and install the code on your own Django
+website, and how to customise its behaviour.</p>
 <div class="section" id="contents">
 <h2>Contents:<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
@@ -103,6 +111,24 @@ backends.</p>
 <li class="toctree-l2"><a class="reference internal" href="how.html#adminloginpatchesmiddleware">AdminLoginPatchesMiddleware</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="obtain.html">Obtaining the code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="obtain.html#development-version">Development version</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="install.html#basic-installation">Basic installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#login-view">Login view</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#templates">Templates</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings.html#admin-login-view">ADMIN_LOGIN_VIEW</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings.html#admin-login-args">ADMIN_LOGIN_ARGS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings.html#admin-login-inactive-template">ADMIN_LOGIN_INACTIVE_TEMPLATE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings.html#admin-login-notstaff-template">ADMIN_LOGIN_NOTSTAFF_TEMPLATE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings.html#admin-login-nopermission-template">ADMIN_LOGIN_NOPERMISSION_TEMPLATE</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="gpl3.html">GNU General Public License</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="gpl3.html#preamble">Preamble</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gpl3.html#terms-and-conditions">TERMS AND CONDITIONS</a></li>
@@ -115,12 +141,12 @@ backends.</p>
 <div class="section" id="license">
 <h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
 <p>Copyright (C) 2010 Blair Bonnett</p>
-<p>django-email-auth is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by the
-Free Software Foundation, either version 3 of the License, or (at your
-option) any later version.</p>
-<p>django-email-auth is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
+<p>django-admin-loginpatches is free software: you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.</p>
+<p>django-admin-loginpatches is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.</p>
 <p>Version 3 of the GNU General Public License is available <a class="reference internal" href="gpl3.html#gpl3"><em>here</em></a>,

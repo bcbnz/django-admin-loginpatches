@@ -1,0 +1,221 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Settings &mdash; django-admin-loginpatches v0.5 documentation</title>
+    <link rel="stylesheet" href="static/default.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="top" title="django-admin-loginpatches v0.5 documentation" href="index.html" />
+    <link rel="next" title="GNU General Public License" href="gpl3.html" />
+    <link rel="prev" title="Installation" href="install.html" />
+ 
+<script type="text/javascript" src="templatebuiltins.js"></script>
+<script type="text/javascript">
+(function($) {
+    if (!django_template_builtins) {
+       // templatebuiltins.js missing, do nothing.
+       return;
+    }
+    $(document).ready(function() {
+        // Hyperlink Django template tags and filters
+        var base = "ref/templates/builtins.html";
+        if (base == "#") {
+            // Special case for builtins.html itself
+            base = "";
+        }
+        // Tags are keywords, class '.k'
+        $("div.highlight\\-html\\+django span.k").each(function(i, elem) {
+             var tagname = $(elem).text();
+             if ($.inArray(tagname, django_template_builtins.ttags) != -1) {
+                 var fragment = tagname.replace(/_/, '-');
+                 $(elem).html("<a href='" + base + "#" + fragment + "'>" + tagname + "</a>");
+             }
+        });
+        // Filters are functions, class '.nf'
+        $("div.highlight\\-html\\+django span.nf").each(function(i, elem) {
+             var filtername = $(elem).text();
+             if ($.inArray(filtername, django_template_builtins.tfilters) != -1) {
+                 var fragment = filtername.replace(/_/, '-');
+                 $(elem).html("<a href='" + base + "#" + fragment + "'>" + filtername + "</a>");
+             }
+        });
+    });
+})(jQuery);
+</script>
+
+  </head>
+  <body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="index.html">django-admin-loginpatches v0.5 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="index.html">Home</a>  |
+        <a title="Table of contents" href="contents.html">Table of contents</a>  |
+        <a title="Global index" href="genindex.html">Index</a>  |
+        <a title="Module index" href="py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="install.html" title="Installation">previous</a> 
+     |
+    <a title="django-admin-loginpatches v0.5 documentation" href="index.html" accesskey="U">up</a>
+   |
+    <a href="gpl3.html" title="GNU General Public License">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="settings">
+            
+  <div class="section" id="settings">
+<span id="id1"></span><h1>Settings<a class="headerlink" href="#settings" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="admin-login-view">
+<span id="std:setting-ADMIN_LOGIN_VIEW"></span><h2>ADMIN_LOGIN_VIEW<a class="headerlink" href="#admin-login-view" title="Permalink to this headline">¶</a></h2>
+<p>Default: <tt class="docutils literal"><span class="pre">'django.contrib.auth.views.login'</span></tt></p>
+<p>This is the view that will be used to present the login form to the user when
+needed. It should be given as a string which represents an importable Django
+view.</p>
+</div>
+<div class="section" id="admin-login-args">
+<span id="std:setting-ADMIN_LOGIN_ARGS"></span><h2>ADMIN_LOGIN_ARGS<a class="headerlink" href="#admin-login-args" title="Permalink to this headline">¶</a></h2>
+<p>Default: <tt class="docutils literal"><span class="pre">{}</span></tt> (Empty dictionary)</p>
+<p>A dictionary of keyword arguments to be passed to the login view whenever it is
+called.</p>
+</div>
+<div class="section" id="admin-login-inactive-template">
+<span id="std:setting-ADMIN_LOGIN_INACTIVE_TEMPLATE"></span><h2>ADMIN_LOGIN_INACTIVE_TEMPLATE<a class="headerlink" href="#admin-login-inactive-template" title="Permalink to this headline">¶</a></h2>
+<p>Default: <tt class="docutils literal"><span class="pre">'admin/inactive.html'</span></tt></p>
+<p>The name of the template to be rendered when the users account is inactive. The
+template is given both a <tt class="xref py py-class docutils literal"><span class="pre">RequestContext</span></tt> and the following context:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">title</span></tt>: The title of the page</li>
+<li><tt class="docutils literal"><span class="pre">message</span></tt>: A message explaining the problem.</li>
+</ul>
+<p>In theory, this template will never be used as a user with an inactive account
+should not be allowed to log in. However, it is present as an extra safety
+check.</p>
+</div>
+<div class="section" id="admin-login-notstaff-template">
+<span id="std:setting-ADMIN_LOGIN_NOTSTAFF_TEMPLATE"></span><h2>ADMIN_LOGIN_NOTSTAFF_TEMPLATE<a class="headerlink" href="#admin-login-notstaff-template" title="Permalink to this headline">¶</a></h2>
+<p>Default: <tt class="docutils literal"><span class="pre">'admin/not_staff.html'</span></tt></p>
+<p>The name of the template to be rendered when the user does not have the
+required staff status. The template is given both a <tt class="xref py py-class docutils literal"><span class="pre">RequestContext</span></tt> and
+the following context:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">title</span></tt>: The title of the page</li>
+<li><tt class="docutils literal"><span class="pre">message</span></tt>: A message explaining the problem.</li>
+</ul>
+</div>
+<div class="section" id="admin-login-nopermission-template">
+<span id="std:setting-ADMIN_LOGIN_NOPERMISSION_TEMPLATE"></span><h2>ADMIN_LOGIN_NOPERMISSION_TEMPLATE<a class="headerlink" href="#admin-login-nopermission-template" title="Permalink to this headline">¶</a></h2>
+<p>Default: <tt class="docutils literal"><span class="pre">'admin/permission_error.html'</span></tt></p>
+<p>The name of the template to be rendered when the user does not have the
+permission required to view the page. The template is given both a
+<tt class="xref py py-class docutils literal"><span class="pre">RequestContext</span></tt> and the following context:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">title</span></tt>: The title of the page</li>
+<li><tt class="docutils literal"><span class="pre">message</span></tt>: A message explaining the problem.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Settings</a><ul>
+<li><a class="reference internal" href="#admin-login-view">ADMIN_LOGIN_VIEW</a></li>
+<li><a class="reference internal" href="#admin-login-args">ADMIN_LOGIN_ARGS</a></li>
+<li><a class="reference internal" href="#admin-login-inactive-template">ADMIN_LOGIN_INACTIVE_TEMPLATE</a></li>
+<li><a class="reference internal" href="#admin-login-notstaff-template">ADMIN_LOGIN_NOTSTAFF_TEMPLATE</a></li>
+<li><a class="reference internal" href="#admin-login-nopermission-template">ADMIN_LOGIN_NOPERMISSION_TEMPLATE</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="install.html">Installation</a></li>
+    
+    
+      <li>Next: <a href="gpl3.html">GNU General Public License</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="index.html">django-admin-loginpatches v0.5 documentation</a>
+        
+        <ul><li>Settings</li></ul>
+        
+      </li>
+  </ul>  
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="sources/settings.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Sep 23, 2010</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="install.html" title="Installation">previous</a> 
+     |
+    <a title="django-admin-loginpatches v0.5 documentation" href="index.html" accesskey="U">up</a>
+   |
+    <a href="gpl3.html" title="GNU General Public License">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>
