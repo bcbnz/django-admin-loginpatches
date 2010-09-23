@@ -17,6 +17,7 @@ Contents:
    why
    how
    settings
+   templates
    gpl3
 
 License
