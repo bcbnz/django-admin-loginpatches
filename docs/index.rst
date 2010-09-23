@@ -14,6 +14,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   why
    middleware
    gpl3
 
@@ -32,5 +33,5 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-Version 3 of the GNU General Public License is available `here <gpl3.rst>`_,
+Version 3 of the GNU General Public License is available :ref:`here <gpl3>`,
 or online (along with any later versions) at http://www.gnu.org/licenses/.
