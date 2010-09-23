@@ -2,9 +2,18 @@
 django-admin-loginpatches
 =========================
 
-Patches the `Django`_ administration code so that the login procedure for the
-administration site can be better integrated with custom authentication
-backends.
+By default, `Django`_ requires a username and password for a user to log in.
+Alternative login methods, such as with an email address and passwords or via
+an LDAP server, can be implemented by using a custom authentication backend.
+The Django administrative interface can use these custom backends. However,
+the logon forms and corresponding error messages are hard-coded, often leading
+to a confusing user interface when a custom backend is used. This project fixes
+this by altering the behaviour of the administrative interface to allow the
+login forms and messages to be customisable just like the backend.
+
+This documentation describes the problems with the default behaviour, how the
+project fixes it, how to obtain and install the code on your own Django
+website, and how to customise its behaviour.
 
 .. _`Django`: http://www.djangoproject.com
 
