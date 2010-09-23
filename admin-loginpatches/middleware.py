@@ -21,62 +21,53 @@ from functools import wraps
 
 import django.contrib.admin.views.decorators
 import django.contrib.admin.sites
-from django.http import HttpResponseRedirect
+from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.conf import settings
+from django.core.urlresolvers import get_callable
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils.functional import update_wrapper
 from django.utils.http import urlquote
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_protect
 
 
 def staff_member_required(view_func):
-    """Decorator used to protect pages requiring staff status. Used as a
-    replacement for the django.contrib.admin.views.decorators version as that
-    does not use the login URL specified in the settings (and hence gives
-    misleading errors when custom authentication backends are used).
-
-    This requires a LOGIN_URL to be specified in the settings, and for the
-    view providing this login to accept a 'next' parameter giving the URL to
-    redirect to after login.
-
-    Two templates are also required:
-    * admin/inactive.html informs the user their account is inactive
-    * admin/not_staff.html informs the user they do not have staff status
-
-    The context provided to both these templates is as follows:
-    * title - a title for the page
-    * message - error message to display to the user
-
-    """
     def _checklogin(request, *args, **kwargs):
         # Not logged in
         if not request.user.is_authenticated():
-            from django.conf import settings
-            from django.contrib.auth import REDIRECT_FIELD_NAME
-            login_url = settings.LOGIN_URL
-            path = urlquote(request.get_full_path())
-            redirect_path = '%s?%s=%s' % (login_url, REDIRECT_FIELD_NAME, path)
-            return HttpResponseRedirect(redirect_path)
+            login_view = getattr(settings, 'ADMIN_LOGIN_VIEW',
+                                 'django.contrib.auth.views.login')
+            login_args = getattr(settings, 'ADMIN_LOGIN_ARGS', {})
+            view = get_callable(login_view)
+            request.GET._mutable = True
+            request.GET[REDIRECT_FIELD_NAME] = request.get_full_path()
+            request.GET._mutable = False
+            return view(request, **login_args)
 
         # Inactive user. This *should* be handled by the login form, and
         # inactive users *shouldn't* have staff permission, but lets make
         # absolutely sure.
         if not request.user.is_active:
+            template = getattr(settings, 'ADMIN_LOGIN_INACTIVE_TEMPLATE',
+                               'admin/inactive.html')
             context = {
-                'message': _('Your user account is not active.'),
                 'title': _('Inactive account'),
+                'message': _('Your account is not active.'),
             }
-            return render_to_response('admin/inactive.html', context,
+            return render_to_response(template, context,
                                       context_instance=RequestContext(request))
 
         # Not a staff member
         if not request.user.is_staff:
+            template = getattr(settings, 'ADMIN_LOGIN_NOTSTAFF_TEMPLATE',
+                               'admin/not_staff.html')
             context = {
-                'message': _('Staff status is required to access this page.'),
-                'title': _('Not a staff member'),
+                'title': _('Not staff'),
+                'message': _('You need to be a staff member to view this page.'),
             }
-            return render_to_response('admin/not_staff.html', context,
+            return render_to_response(template, context,
                                       context_instance=RequestContext(request))
 
         # User is good to go
@@ -88,51 +79,51 @@ def admin_view(self, view, cacheable=False):
     def inner(request, *args, **kwargs):
         # Not logged in
         if not request.user.is_authenticated():
-            from django.conf import settings
-            from django.contrib.auth import REDIRECT_FIELD_NAME
-            login_url = settings.LOGIN_URL
-            path = urlquote(request.get_full_path())
-            redirect_path = '%s?%s=%s' % (login_url, REDIRECT_FIELD_NAME, path)
-            return HttpResponseRedirect(redirect_path)
+            login_view = getattr(settings, 'ADMIN_LOGIN_VIEW',
+                                 'django.contrib.auth.views.login')
+            login_args = getattr(settings, 'ADMIN_LOGIN_ARGS', {})
+            loginview = get_callable(login_view)
+            request.GET._mutable = True
+            request.GET[REDIRECT_FIELD_NAME] = request.get_full_path()
+            request.GET._mutable = False
+            return loginview(request, **login_args)
 
         # Inactive user. This *should* be handled by the login form, and
         # inactive users *shouldn't* have staff permission, but lets make
         # absolutely sure.
         if not request.user.is_active:
+            template = getattr(settings, 'ADMIN_LOGIN_INACTIVE_TEMPLATE',
+                               'admin/inactive.html')
             context = {
-                'message': _('Your user account is not active.'),
                 'title': _('Inactive account'),
+                'message': _('Your account is not active.'),
             }
-            return render_to_response('admin/inactive.html', context,
+            return render_to_response(template, context,
                                       context_instance=RequestContext(request))
 
         # Don't have permission to do this
         if not self.has_permission(request):
+            template = getattr(settings, 'ADMIN_LOGIN_NOPERMISSION_TEMPLATE',
+                               'admin/permission_error.html')
             context = {
-                'message': _('You do not have permission to view this page.'),
                 'title': _('Permission error'),
+                'message': _('You do not have permission to view this page.'),
             }
-            return render_to_response('admin/permission_error.html', context,
+            return render_to_response(template, context,
                                       context_instance=RequestContext(request))
 
         # We're good to go
         return view(request, *args, **kwargs)
     if not cacheable:
         inner = never_cache(inner)
+    if not getattr(view, 'csrf_exempt', False):
+        inner = csrf_protect(inner)
     return update_wrapper(inner, view)
 
 class AdminLoginPatchesMiddleware:
-    """Middleware to better integrate the email authentication backend into
-    the admin site. The default staff_member_required decorator used to protect
-    admin pages provides its own login form. This gives misleading error
-    messages (for example, 'Usernames may not contain @'). Also, if a user is
-    inactive or doesn't have staff status, it keeps prompting them to login
-    rather than telling them what the real issue is.
-
-    This middleware replaces the default decorator with a custom version which
-    redirects to the LOGIN_URL specified in the settings when needed. It also
-    tells the user if they don't have staff status so they know what the issue
-    is.
+    """The admin_view and staff_member_required decorators don't fit work well
+    with custom authentication backends. This middleware class replaces the
+    default decorators with custom versions which allow better customisation.
 
     To ensure this substitution occurs on every request, it is recommended this
     middleware is placed at the top of the list. It never stops a request and
