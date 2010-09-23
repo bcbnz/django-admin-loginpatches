@@ -15,7 +15,7 @@ Contents:
    :maxdepth: 2
 
    why
-   middleware
+   how
    gpl3
 
 License
