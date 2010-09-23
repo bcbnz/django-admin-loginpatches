@@ -121,7 +121,7 @@ def admin_view(self, view, cacheable=False):
         inner = never_cache(inner)
     return update_wrapper(inner, view)
 
-class EmailAuthMiddleware:
+class AdminLoginPatchesMiddleware:
     """Middleware to better integrate the email authentication backend into
     the admin site. The default staff_member_required decorator used to protect
     admin pages provides its own login form. This gives misleading error
