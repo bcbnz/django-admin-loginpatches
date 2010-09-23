@@ -1,0 +1,208 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Why do we need to do this? &mdash; django-admin-loginpatches v0.5 documentation</title>
+    <link rel="stylesheet" href="static/default.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="top" title="django-admin-loginpatches v0.5 documentation" href="index.html" />
+    <link rel="next" title="How we’ll do this" href="how.html" />
+    <link rel="prev" title="django-admin-loginpatches" href="index.html" />
+ 
+<script type="text/javascript" src="templatebuiltins.js"></script>
+<script type="text/javascript">
+(function($) {
+    if (!django_template_builtins) {
+       // templatebuiltins.js missing, do nothing.
+       return;
+    }
+    $(document).ready(function() {
+        // Hyperlink Django template tags and filters
+        var base = "ref/templates/builtins.html";
+        if (base == "#") {
+            // Special case for builtins.html itself
+            base = "";
+        }
+        // Tags are keywords, class '.k'
+        $("div.highlight\\-html\\+django span.k").each(function(i, elem) {
+             var tagname = $(elem).text();
+             if ($.inArray(tagname, django_template_builtins.ttags) != -1) {
+                 var fragment = tagname.replace(/_/, '-');
+                 $(elem).html("<a href='" + base + "#" + fragment + "'>" + tagname + "</a>");
+             }
+        });
+        // Filters are functions, class '.nf'
+        $("div.highlight\\-html\\+django span.nf").each(function(i, elem) {
+             var filtername = $(elem).text();
+             if ($.inArray(filtername, django_template_builtins.tfilters) != -1) {
+                 var fragment = filtername.replace(/_/, '-');
+                 $(elem).html("<a href='" + base + "#" + fragment + "'>" + filtername + "</a>");
+             }
+        });
+    });
+})(jQuery);
+</script>
+
+  </head>
+  <body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="index.html">django-admin-loginpatches v0.5 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="index.html">Home</a>  |
+        <a title="Table of contents" href="contents.html">Table of contents</a>  |
+        <a title="Global index" href="genindex.html">Index</a>  |
+        <a title="Module index" href="py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="index.html" title="django-admin-loginpatches">previous</a> 
+     |
+    <a title="django-admin-loginpatches v0.5 documentation" href="index.html" accesskey="U">up</a>
+   |
+    <a href="how.html" title="How we&amp;#8217;ll do this">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="why">
+            
+  <div class="section" id="why-do-we-need-to-do-this">
+<h1>Why do we need to do this?<a class="headerlink" href="#why-do-we-need-to-do-this" title="Permalink to this headline">¶</a></h1>
+<p>The Django administration module (<tt class="xref py py-mod docutils literal"><span class="pre">django.contrib.admin</span></tt>) uses two
+decorators to ensure the user has permission to access a view:</p>
+<ul class="simple">
+<li><tt class="xref py py-func docutils literal"><span class="pre">django.contrib.admin.sites.AdminSite.admin_view()</span></tt> to check that a user
+has a specific permission.</li>
+<li><tt class="xref py py-func docutils literal"><span class="pre">django.contrib.admin.views.decorators.staff_member_required()</span></tt> to check
+if a user is a staff member.</li>
+</ul>
+<div class="section" id="the-problem">
+<h2>The problem<a class="headerlink" href="#the-problem" title="Permalink to this headline">¶</a></h2>
+<p>These decorators provide login forms if neccessary. However, since these forms
+are hard-coded, they do not fit in well with custom authentication backends.
+The user is always prompted for a username and password, when the backend may
+require, for example, an email address and password.</p>
+<p>The error messages shown if the login fails are also hard-coded. This can be
+extremely misleading to the user. For example, if using an email backend and
+the user enters their password incorrectly, they are told:</p>
+<div class="highlight-python"><pre>Usernames cannot contain the '@' character.</pre>
+</div>
+<p>Finally, the decorators do not inform the user if they do not have the correct
+permissions to access the view. Instead, they repeatedly prompt the user to log
+in, even if they already successfully logged in. This is very confusing
+behaviour, especially if the user has reason to believe they should be able to
+access the view.</p>
+</div>
+<div class="section" id="the-solution">
+<h2>The solution<a class="headerlink" href="#the-solution" title="Permalink to this headline">¶</a></h2>
+<p>We would like the view used to prompt the user to log in to be specified in the
+settings, thus allowing it to be customised to fit the authentication backend
+in use. Additionally, we would like the user to be informed when they do not
+have the appropriate permissions to access the view. Hence, we need to modify
+the behaviour of the administration module.</p>
+<p>The most obvious way of achieving this is to edit the code of the module to
+suit. However, this is only possible when we have the neccessary permissions to
+do so, which will not be the case on the majority of web servers. Instead, we
+will <a class="reference external" href="http://en.wikipedia.org/wiki/Monkey_patch">monkey patch</a> the code on
+the fly.</p>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Why do we need to do this?</a><ul>
+<li><a class="reference internal" href="#the-problem">The problem</a></li>
+<li><a class="reference internal" href="#the-solution">The solution</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="index.html">django-admin-loginpatches</a></li>
+    
+    
+      <li>Next: <a href="how.html">How we&#8217;ll do this</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="index.html">django-admin-loginpatches v0.5 documentation</a>
+        
+        <ul><li>Why do we need to do this?</li></ul>
+        
+      </li>
+  </ul>  
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="sources/why.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Sep 23, 2010</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="index.html" title="django-admin-loginpatches">previous</a> 
+     |
+    <a title="django-admin-loginpatches v0.5 documentation" href="index.html" accesskey="U">up</a>
+   |
+    <a href="how.html" title="How we&amp;#8217;ll do this">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

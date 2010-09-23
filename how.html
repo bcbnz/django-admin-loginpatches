@@ -1,0 +1,265 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>How we’ll do this &mdash; django-admin-loginpatches v0.5 documentation</title>
+    <link rel="stylesheet" href="static/default.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="top" title="django-admin-loginpatches v0.5 documentation" href="index.html" />
+    <link rel="next" title="GNU General Public License" href="gpl3.html" />
+    <link rel="prev" title="Why do we need to do this?" href="why.html" />
+ 
+<script type="text/javascript" src="templatebuiltins.js"></script>
+<script type="text/javascript">
+(function($) {
+    if (!django_template_builtins) {
+       // templatebuiltins.js missing, do nothing.
+       return;
+    }
+    $(document).ready(function() {
+        // Hyperlink Django template tags and filters
+        var base = "ref/templates/builtins.html";
+        if (base == "#") {
+            // Special case for builtins.html itself
+            base = "";
+        }
+        // Tags are keywords, class '.k'
+        $("div.highlight\\-html\\+django span.k").each(function(i, elem) {
+             var tagname = $(elem).text();
+             if ($.inArray(tagname, django_template_builtins.ttags) != -1) {
+                 var fragment = tagname.replace(/_/, '-');
+                 $(elem).html("<a href='" + base + "#" + fragment + "'>" + tagname + "</a>");
+             }
+        });
+        // Filters are functions, class '.nf'
+        $("div.highlight\\-html\\+django span.nf").each(function(i, elem) {
+             var filtername = $(elem).text();
+             if ($.inArray(filtername, django_template_builtins.tfilters) != -1) {
+                 var fragment = filtername.replace(/_/, '-');
+                 $(elem).html("<a href='" + base + "#" + fragment + "'>" + filtername + "</a>");
+             }
+        });
+    });
+})(jQuery);
+</script>
+
+  </head>
+  <body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="index.html">django-admin-loginpatches v0.5 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="index.html">Home</a>  |
+        <a title="Table of contents" href="contents.html">Table of contents</a>  |
+        <a title="Global index" href="genindex.html">Index</a>  |
+        <a title="Module index" href="py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="why.html" title="Why do we need to do this?">previous</a> 
+     |
+    <a title="django-admin-loginpatches v0.5 documentation" href="index.html" accesskey="U">up</a>
+   |
+    <a href="gpl3.html" title="GNU General Public License">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="how">
+            
+  <div class="section" id="how-we-ll-do-this">
+<h1>How we&#8217;ll do this<a class="headerlink" href="#how-we-ll-do-this" title="Permalink to this headline">¶</a></h1>
+<p>We want to replace the default decorators with our custom versions for every
+request. To do so, we will create a middleware class and use the
+<tt class="xref py py-func docutils literal"><span class="pre">process_request()</span></tt> function to perform the replacement.</p>
+<div class="section" id="middleware">
+<h2>Middleware<a class="headerlink" href="#middleware" title="Permalink to this headline">¶</a></h2>
+<p>Each time a request, response, view or exception is handled, Django calls each
+class in the <tt class="xref std std-setting docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt> setting with the details. This
+allows this input, output or environment to be modified independently of the
+standard Django procesing.</p>
+<p>See the <a class="reference external" href="http://docs.djangoproject.com/en/dev/topics/http/middleware/">Django middleware documentation</a>
+for more information on middleware.</p>
+</div>
+<div class="section" id="admin-view-decorator">
+<h2><tt class="xref py py-func docutils literal"><span class="pre">admin_view()</span></tt> decorator<a class="headerlink" href="#admin-view-decorator" title="Permalink to this headline">¶</a></h2>
+<p>In Django 1.2, the <tt class="xref py py-func docutils literal"><span class="pre">admin_view()</span></tt> is defined as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">AdminSite</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">admin_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">cacheable</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+
+        <span class="k">def</span> <span class="nf">inner</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_permission</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cacheable</span><span class="p">:</span>
+            <span class="n">inner</span> <span class="o">=</span> <span class="n">never_cache</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="s">&#39;csrf_exempt&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
+            <span class="n">inner</span> <span class="o">=</span> <span class="n">csrf_protect</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">update_wrapper</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">view</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <tt class="xref py py-func docutils literal"><span class="pre">AdminSite.login()</span></tt> function displays and processes the login form.
+In order to change the behaviour of the decorator as desired, we need to alter
+the <tt class="xref py py-func docutils literal"><span class="pre">inner()</span></tt> sub-function to match the following behaviour:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">inner</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="c"># Delegate to the login view specified in settings</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_authenticated</span><span class="p">():</span>
+        <span class="o">....</span>
+
+    <span class="c"># Delegate to the &quot;your account is inactive&quot; view specified in settings</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_active</span><span class="p">:</span>
+        <span class="o">....</span>
+
+    <span class="c"># Delegate to the &quot;you don&#39;t have permission&quot; view specified in settings</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_permissions</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+        <span class="o">....</span>
+
+    <span class="c"># Have permission, generate the view</span>
+    <span class="k">return</span> <span class="n">view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="staff-member-required-decorator">
+<h2><tt class="xref py py-func docutils literal"><span class="pre">staff_member_required()</span></tt> decorator<a class="headerlink" href="#staff-member-required-decorator" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="xref py py-func docutils literal"><span class="pre">staff_member_required()</span></tt> decorator follows the same pattern as
+<tt class="xref py py-func docutils literal"><span class="pre">admin_view()</span></tt> except that it uses <tt class="xref py py-attr docutils literal"><span class="pre">request.user.is_staff</span></tt>
+instead of <tt class="xref py py-func docutils literal"><span class="pre">self.has_permissions()</span></tt> as the permission test. Our version of
+it will also behave in the same fashion as our version of <tt class="xref py py-func docutils literal"><span class="pre">admin_view()</span></tt>.</p>
+</div>
+<div class="section" id="adminloginpatchesmiddleware">
+<h2>AdminLoginPatchesMiddleware<a class="headerlink" href="#adminloginpatchesmiddleware" title="Permalink to this headline">¶</a></h2>
+<p>With the replacement functions written, the final step is to actually perform
+the replacement. This is performed by the <tt class="xref py py-func docutils literal"><span class="pre">process_request()</span></tt> function of
+the middleware, which is called by Django for each request it receives. The
+documentation for the middleware class is given below.</p>
+<dl class="class">
+<dt id="admin_loginpatches.middleware.AdminLoginPatchesMiddleware">
+<em class="property">class </em><tt class="descclassname">admin_loginpatches.middleware.</tt><tt class="descname">AdminLoginPatchesMiddleware</tt><a class="headerlink" href="#admin_loginpatches.middleware.AdminLoginPatchesMiddleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Django middleware class designed to monkey patch the
+<tt class="xref py py-mod docutils literal"><span class="pre">django.contrib.admin</span></tt> module to better support custom authentication
+backends.</p>
+<p><strong>This should be placed as the first middleware class to be executed.
+Otherwise, any other middleware which uses the decorators will use the
+default versions rather than the custom versions.</strong></p>
+<dl class="function">
+<dt id="admin_loginpatches.middleware.AdminLoginPatchesMiddleware.process_request">
+<tt class="descname">process_request</tt><big>(</big><em>request</em><big>)</big><a class="headerlink" href="#admin_loginpatches.middleware.AdminLoginPatchesMiddleware.process_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called for each request, this function performs the following steps:</p>
+<ul class="simple">
+<li>Replace <tt class="xref py py-func docutils literal"><span class="pre">django.contrib.admin.sites.AdminSite.admin_view()</span></tt> with a
+custom version.</li>
+<li>Replace <tt class="xref py py-func docutils literal"><span class="pre">django.contrib.admin.views.decorators.staff_member_required()</span></tt>
+with a custom version.</li>
+<li>Replace the existing <tt class="xref py py-attr docutils literal"><span class="pre">django.contrib.admin.sites.site</span></tt> (an
+instance of <tt class="xref py py-class docutils literal"><span class="pre">django.contrib.sites.AdminSite</span></tt>) with an instance
+containing the new <tt class="xref py py-func docutils literal"><span class="pre">admin_view()</span></tt> decorator.</li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">How we&#8217;ll do this</a><ul>
+<li><a class="reference internal" href="#middleware">Middleware</a></li>
+<li><a class="reference internal" href="#admin-view-decorator"><tt class="docutils literal"><span class="pre">admin_view()</span></tt> decorator</a></li>
+<li><a class="reference internal" href="#staff-member-required-decorator"><tt class="docutils literal"><span class="pre">staff_member_required()</span></tt> decorator</a></li>
+<li><a class="reference internal" href="#adminloginpatchesmiddleware">AdminLoginPatchesMiddleware</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="why.html">Why do we need to do this?</a></li>
+    
+    
+      <li>Next: <a href="gpl3.html">GNU General Public License</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="index.html">django-admin-loginpatches v0.5 documentation</a>
+        
+        <ul><li>How we&#8217;ll do this</li></ul>
+        
+      </li>
+  </ul>  
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="sources/how.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Sep 23, 2010</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="why.html" title="Why do we need to do this?">previous</a> 
+     |
+    <a title="django-admin-loginpatches v0.5 documentation" href="index.html" accesskey="U">up</a>
+   |
+    <a href="gpl3.html" title="GNU General Public License">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>
