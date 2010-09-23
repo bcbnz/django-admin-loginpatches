@@ -16,6 +16,7 @@ Contents:
 
    why
    how
+   settings
    gpl3
 
 License
