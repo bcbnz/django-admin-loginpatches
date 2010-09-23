@@ -25,8 +25,9 @@ Contents:
 
    why
    how
+   obtain
+   install
    settings
-   templates
    gpl3
 
 License
