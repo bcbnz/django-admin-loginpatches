@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import os
+import sys
+
+# Add extension path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "_ext")))
+
 # Extensions in use
-extensions = ['sphinx.ext.coverage', 'sphinxtogithub']
+extensions = ['sphinx.ext.coverage', 'sphinxtogithub', 'djangodocs']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
@@ -30,7 +36,8 @@ pygments_style = 'sphinx'
 # -- Options for HTML output ---------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.
-html_theme = 'default'
+html_theme_path = ['_theme']
+html_theme = 'djangodocs'
 
 # Don't use the index
 html_use_index = False
